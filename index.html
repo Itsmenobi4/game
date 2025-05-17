@@ -9,26 +9,35 @@
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 to-purple-500 px-4">
 
-  <!-- Form Nama Pemain -->
   <div id="player-setup" class="bg-white bg-opacity-90 backdrop-blur-sm shadow-2xl rounded-3xl p-8 flex flex-col items-center space-y-4 w-[360px]">
     <h1 class="text-3xl font-extrabold text-purple-700 drop-shadow-lg tracking-wider">Tic Tac Toe</h1>
 
-    <!-- Mode Game -->
-    <div class="flex gap-4">
-      <label class="flex items-center gap-2">
-        <input type="radio" name="mode" value="pvp" checked onchange="togglePlayerOInput()" />
-        PvP
-      </label>
-      <label class="flex items-center gap-2">
-        <input type="radio" name="mode" value="pvc" onchange="togglePlayerOInput()" />
-        vs AI
-      </label>
-    </div>
+  <div class="flex gap-4">
+    <label class="flex items-center gap-2">
+      <input type="radio" name="mode" value="pvp" checked onchange="togglePlayerOInput()" />
+      PvP
+    </label>
+    <label class="flex items-center gap-2">
+      <input type="radio" name="mode" value="pvc" onchange="togglePlayerOInput()" />
+      vs AI
+    </label>
+  </div>
+
+  <div id="difficulty-container" class="w-full hidden">
+    <label class="block text-sm text-gray-700 font-semibold mb-1 mt-2">Pilih Kesulitan:</label>
+    <select id="difficulty" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+      <option value="very-hard">Very Hard</option>
+    </select>
+  </div>
+
 
     <input id="playerX" type="text" placeholder="Nama Player X" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"/>
- <label id="playerO-label" class="w-full">
-  <input id="playerO" type="text" placeholder="Nama Player O" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-</label>
+  <label id="playerO-label" class="w-full">
+    <input id="playerO" type="text" placeholder="Nama Player O" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+  </label>
 
     <button onclick="startGame()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all font-semibold shadow-md w-full">
       Mulai Game
@@ -52,7 +61,7 @@
     </div>
   </div>
 
-  <script src="toggleMode.js"></script>
   <script src="backend.js"></script>
 </body>
 </html>
+s
