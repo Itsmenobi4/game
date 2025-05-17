@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tic Tac Toe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 to-purple-500 px-4">
+
+  <!-- Form Nama Pemain -->
+  <div id="player-setup" class="bg-white bg-opacity-90 backdrop-blur-sm shadow-2xl rounded-3xl p-8 flex flex-col items-center space-y-4 w-[360px]">
+    <h1 class="text-3xl font-extrabold text-purple-700 drop-shadow-lg tracking-wider">Tic Tac Toe</h1>
+
+    <!-- Mode Game -->
+    <div class="flex gap-4">
+      <label class="flex items-center gap-2">
+        <input type="radio" name="mode" value="pvp" checked onchange="togglePlayerOInput()" />
+        PvP
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="radio" name="mode" value="pvc" onchange="togglePlayerOInput()" />
+        vs AI
+      </label>
+    </div>
+
+    <input id="playerX" type="text" placeholder="Nama Player X" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+ <label id="playerO-label" class="w-full">
+  <input id="playerO" type="text" placeholder="Nama Player O" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+</label>
+
+    <button onclick="startGame()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all font-semibold shadow-md w-full">
+      Mulai Game
+    </button>
+  </div>
+
+  <div id="game-container" class="hidden bg-white bg-opacity-90 backdrop-blur-sm shadow-2xl rounded-3xl p-8 flex flex-col items-center space-y-6 w-[360px]">
+    <h1 class="text-4xl font-extrabold text-indigo-700 drop-shadow-lg tracking-widest animate-pulse">Tic Tac Toe</h1>
+
+    <div id="board" class="grid grid-cols-3 gap-3"></div>
+
+    <div id="message" class="text-lg font-semibold text-gray-800 min-h-[24px] text-center"></div>
+
+    <div id="end-options" class="hidden flex flex-col gap-3 items-center">
+      <button onclick="restartGame()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-all font-semibold shadow-md">
+        Main Lagi
+      </button>
+      <button onclick="gantiPemain()" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition-all font-semibold shadow-md">
+        Ganti Pemain
+      </button>
+    </div>
+  </div>
+
+  <script src="toggleMode.js"></script>
+  <script src="backend.js"></script>
+</body>
+</html>
