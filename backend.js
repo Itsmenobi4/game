@@ -13,6 +13,10 @@ let difficulty = 'easy';
 const clickSound = new Audio('click.mp3');
 const winSound = new Audio('win.mp3');
 const drawSound = new Audio('draw.mp3');
+const bgSound = new Audio('background.mp3');
+bgSound.loop = true;
+bgSound.volume = 0.3;
+
 
 function startGame() {
   playerXName = document.getElementById("playerX").value || "Player X";
@@ -20,7 +24,6 @@ function startGame() {
 
   const selectedMode = document.querySelector('input[name="mode"]:checked').value;
   vsAI = selectedMode === 'pvc';
-
   difficulty = document.getElementById("difficulty").value;
 
   document.getElementById("player-setup").style.display = "none";
@@ -30,7 +33,13 @@ function startGame() {
   if (endOptions) endOptions.style.display = "none";
 
   restartGame();
+
+  // Tambahin ini supaya musik mulai setelah user klik start
+  bgSound.play().catch(err => {
+    console.log("Audio gagal diputar karena belum ada interaksi user:", err);
+  });
 }
+
 
 function createBoard() {
   board.innerHTML = '';
@@ -128,6 +137,7 @@ function getMediumMove() {
 
   move = findWinningMove('X');
   if (move !== null) return move;
+
   return getRandomMove();
 }
 
@@ -275,6 +285,11 @@ function restartGame() {
   message.textContent = "";
   createBoard();
   updateTurnText();
+
+  const endOptions = document.getElementById("end-options");
+  if (endOptions) {
+    endOptions.style.display = "none";
+  }
 }
 
 function gantiPemain() {
@@ -298,18 +313,17 @@ function togglePlayerOInput() {
     difficultyContainer.classList.add("hidden");
   }
 }
-function restartGame() {
-  cells = Array(9).fill(null);
-  currentPlayer = 'X';
-  gameActive = true;
-  message.textContent = "";
-  createBoard();
-  updateTurnText();
+let isMusicPlaying = true;
 
-  const endOptions = document.getElementById("end-options");
-  if (endOptions) {
-    endOptions.style.display = "none";
+function toggleMusic() {
+  if (isMusicPlaying) {
+    bgSound.pause();
+    document.getElementById("music-btn").textContent = "🔇";
+  } else {
+    bgSound.play();
+    document.getElementById("music-btn").textContent = "🔈";
   }
+  isMusicPlaying = !isMusicPlaying;
 }
 
 createBoard();
