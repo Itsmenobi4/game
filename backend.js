@@ -8,7 +8,9 @@ let cellElements = [];
 let playerXName = "Player X";
 let playerOName = "Player O";
 let vsAI = false;
-let difficulty = 'easy'; 
+let difficulty = 'easy';
+let boardSize = 3; // Default size
+let winningLength = 3; // Default winning condition
 
 const clickSound = new Audio('click.mp3');
 const winSound = new Audio('win.mp3');
@@ -17,7 +19,6 @@ const bgSound = new Audio('background.mp3');
 bgSound.loop = true;
 bgSound.volume = 0.3;
 
-
 function startGame() {
   playerXName = document.getElementById("playerX").value || "Player X";
   playerOName = document.getElementById("playerO").value || "Player O";
@@ -25,6 +26,10 @@ function startGame() {
   const selectedMode = document.querySelector('input[name="mode"]:checked').value;
   vsAI = selectedMode === 'pvc';
   difficulty = document.getElementById("difficulty").value;
+  
+  // Get selected board size
+  boardSize = parseInt(document.querySelector('input[name="board-size"]:checked').value);
+  winningLength = boardSize === 3 ? 3 : boardSize === 6 ? 4 : 5;
 
   document.getElementById("player-setup").style.display = "none";
   document.getElementById("game-container").classList.remove("hidden");
@@ -34,21 +39,29 @@ function startGame() {
 
   restartGame();
 
-  // Tambahin ini supaya musik mulai setelah user klik start
   bgSound.play().catch(err => {
     console.log("Audio gagal diputar karena belum ada interaksi user:", err);
   });
 }
 
-
 function createBoard() {
   board.innerHTML = '';
   cellElements = [];
+  cells = Array(boardSize * boardSize).fill(null);
+  
+  // Adjust board grid based on size
+  board.className = `grid gap-2 justify-center`;
+  board.style.gridTemplateColumns = `repeat(${boardSize}, minmax(0, 1fr))`;
 
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < boardSize * boardSize; i++) {
     const cell = document.createElement('div');
-    cell.className =
-      'w-24 h-24 bg-white border-2 border-indigo-300 flex items-center justify-center text-4xl font-extrabold text-indigo-700 rounded-xl shadow-md hover:bg-indigo-100 transition cursor-pointer cell-animate';
+    // Adjust cell size based on board size
+    const cellSize = boardSize === 3 ? 'w-24 h-24' : 
+                    boardSize === 6 ? 'w-16 h-16' : 'w-12 h-12';
+    const textSize = boardSize === 3 ? 'text-4xl' : 
+                    boardSize === 6 ? 'text-2xl' : 'text-xl';
+    
+    cell.className = `${cellSize} bg-white border-2 border-indigo-300 flex items-center justify-center ${textSize} font-extrabold text-indigo-700 rounded-xl shadow-md hover:bg-indigo-100 transition cursor-pointer cell-animate`;
     cell.dataset.index = i;
     cell.addEventListener('click', handleClick);
     board.appendChild(cell);
@@ -107,13 +120,13 @@ function aiMove() {
       moveIndex = getRandomMove();
       break;
     case 'medium':
-      moveIndex = getMediumMove();
+      moveIndex = boardSize === 3 ? getMediumMove() : getRandomMove(); // Medium only for 3x3
       break;
     case 'hard':
-      moveIndex = getHardMove();
+      moveIndex = boardSize === 3 ? getHardMove() : getRandomMove(); // Hard only for 3x3
       break;
     case 'very-hard':
-      moveIndex = getBestMove();
+      moveIndex = boardSize === 3 ? getBestMove() : getRandomMove(); // Very-hard only for 3x3
       break;
     default:
       moveIndex = getRandomMove();
@@ -148,15 +161,17 @@ function getHardMove() {
   move = findWinningMove('X');
   if (move !== null) return move;
 
-  if (cells[4] === null) return 4;
+  if (cells[4] === null && boardSize === 3) return 4;
 
   const corners = [0, 2, 6, 8].filter(i => cells[i] === null);
-  if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
+  if (corners.length > 0 && boardSize === 3) return corners[Math.floor(Math.random() * corners.length)];
 
   return getRandomMove();
 }
 
 function getBestMove() {
+  if (boardSize !== 3) return getRandomMove(); // Only for 3x3
+    
   let bestScore = -Infinity;
   let move = null;
   const available = getAvailableMoves();
@@ -182,7 +197,7 @@ function minimax(boardState, depth, isMaximizing) {
 
   if (isMaximizing) {
     let bestScore = -Infinity;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < boardSize * boardSize; i++) {
       if (boardState[i] === null) {
         boardState[i] = 'O';
         let score = minimax(boardState, depth + 1, false);
@@ -193,7 +208,7 @@ function minimax(boardState, depth, isMaximizing) {
     return bestScore;
   } else {
     let bestScore = Infinity;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < boardSize * boardSize; i++) {
       if (boardState[i] === null) {
         boardState[i] = 'X';
         let score = minimax(boardState, depth + 1, true);
@@ -206,18 +221,74 @@ function minimax(boardState, depth, isMaximizing) {
 }
 
 function getWinner(boardState) {
-  const winCombos = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-
-  for (const combo of winCombos) {
-    const [a, b, c] = combo;
-    if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
-      return boardState[a];
+  // Check rows
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col <= boardSize - winningLength; col++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[row * boardSize + col + i] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return firstCell;
     }
   }
+
+  // Check columns
+  for (let col = 0; col < boardSize; col++) {
+    for (let row = 0; row <= boardSize - winningLength; row++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[(row + i) * boardSize + col] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return firstCell;
+    }
+  }
+
+  // Check diagonals (top-left to bottom-right)
+  for (let row = 0; row <= boardSize - winningLength; row++) {
+    for (let col = 0; col <= boardSize - winningLength; col++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[(row + i) * boardSize + (col + i)] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return firstCell;
+    }
+  }
+
+  // Check diagonals (top-right to bottom-left)
+  for (let row = 0; row <= boardSize - winningLength; row++) {
+    for (let col = winningLength - 1; col < boardSize; col++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[(row + i) * boardSize + (col - i)] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return firstCell;
+    }
+  }
+
   return null;
 }
 
@@ -235,15 +306,75 @@ function findWinningMove(player) {
 }
 
 function checkWinnerTemp(boardState) {
-  const winCombos = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  return winCombos.some(combo => {
-    const [a, b, c] = combo;
-    return boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c];
-  });
+  // Check rows
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col <= boardSize - winningLength; col++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[row * boardSize + col + i] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return true;
+    }
+  }
+
+  // Check columns
+  for (let col = 0; col < boardSize; col++) {
+    for (let row = 0; row <= boardSize - winningLength; row++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[(row + i) * boardSize + col] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return true;
+    }
+  }
+
+  // Check diagonals (top-left to bottom-right)
+  for (let row = 0; row <= boardSize - winningLength; row++) {
+    for (let col = 0; col <= boardSize - winningLength; col++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[(row + i) * boardSize + (col + i)] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return true;
+    }
+  }
+
+  // Check diagonals (top-right to bottom-left)
+  for (let row = 0; row <= boardSize - winningLength; row++) {
+    for (let col = winningLength - 1; col < boardSize; col++) {
+      const firstCell = boardState[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (boardState[(row + i) * boardSize + (col - i)] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) return true;
+    }
+  }
+
+  return false;
 }
 
 function updateTurnText() {
@@ -252,23 +383,107 @@ function updateTurnText() {
 }
 
 function checkWinner() {
-  const winCombos = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-
-  return winCombos.some(combo => {
-    const [a, b, c] = combo;
-    if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
-      combo.forEach(i => {
-        cellElements[i].classList.add('win-glow');
-        cellElements[i].style.transform = 'scale(1.1)';
-      });
-      return true;
+  // Check rows
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col <= boardSize - winningLength; col++) {
+      const firstCell = cells[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (cells[row * boardSize + col + i] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) {
+        // Highlight winning cells
+        for (let i = 0; i < winningLength; i++) {
+          const idx = row * boardSize + col + i;
+          cellElements[idx].classList.add('win-glow');
+          cellElements[idx].style.transform = 'scale(1.1)';
+        }
+        return true;
+      }
     }
-    return false;
-  });
+  }
+
+  // Check columns
+  for (let col = 0; col < boardSize; col++) {
+    for (let row = 0; row <= boardSize - winningLength; row++) {
+      const firstCell = cells[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (cells[(row + i) * boardSize + col] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) {
+        // Highlight winning cells
+        for (let i = 0; i < winningLength; i++) {
+          const idx = (row + i) * boardSize + col;
+          cellElements[idx].classList.add('win-glow');
+          cellElements[idx].style.transform = 'scale(1.1)';
+        }
+        return true;
+      }
+    }
+  }
+
+  // Check diagonals (top-left to bottom-right)
+  for (let row = 0; row <= boardSize - winningLength; row++) {
+    for (let col = 0; col <= boardSize - winningLength; col++) {
+      const firstCell = cells[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (cells[(row + i) * boardSize + (col + i)] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) {
+        // Highlight winning cells
+        for (let i = 0; i < winningLength; i++) {
+          const idx = (row + i) * boardSize + (col + i);
+          cellElements[idx].classList.add('win-glow');
+          cellElements[idx].style.transform = 'scale(1.1)';
+        }
+        return true;
+      }
+    }
+  }
+
+  // Check diagonals (top-right to bottom-left)
+  for (let row = 0; row <= boardSize - winningLength; row++) {
+    for (let col = winningLength - 1; col < boardSize; col++) {
+      const firstCell = cells[row * boardSize + col];
+      if (!firstCell) continue;
+      
+      let win = true;
+      for (let i = 1; i < winningLength; i++) {
+        if (cells[(row + i) * boardSize + (col - i)] !== firstCell) {
+          win = false;
+          break;
+        }
+      }
+      if (win) {
+        // Highlight winning cells
+        for (let i = 0; i < winningLength; i++) {
+          const idx = (row + i) * boardSize + (col - i);
+          cellElements[idx].classList.add('win-glow');
+          cellElements[idx].style.transform = 'scale(1.1)';
+        }
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function showEndOptions() {
@@ -279,7 +494,7 @@ function showEndOptions() {
 }
 
 function restartGame() {
-  cells = Array(9).fill(null);
+  cells = Array(boardSize * boardSize).fill(null);
   currentPlayer = 'X';
   gameActive = true;
   message.textContent = "";
@@ -313,6 +528,7 @@ function togglePlayerOInput() {
     difficultyContainer.classList.add("hidden");
   }
 }
+
 let isMusicPlaying = true;
 
 function toggleMusic() {
